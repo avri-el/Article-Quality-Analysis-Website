@@ -57,7 +57,8 @@ function App() {
       });
 
       if (!response.ok) {
-        throw new Error("Gagal melakukan analisis");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Gagal melakukan analisis");
       }
 
       const data = await response.json();
@@ -123,8 +124,7 @@ function App() {
                     placeholder="Masukkan tautan artikel, misal manadopost.id/..."
                   />
                   <p className="text-sm text-slate-500">
-                    Jika URL valid dan dikenali, backend akan menggunakan teks
-                    contoh untuk demonstrasi.
+                    Tempel URL artikel dari website mana pun untuk dianalisis.
                   </p>
                 </div>
               )}
@@ -179,6 +179,12 @@ function App() {
                   <h2 className="mt-3 text-3xl font-semibold text-blue-950">
                     Skor artikel: {result.overallScore}
                   </h2>
+                  {result.sourceDomain && (
+                    <p className="mt-1 text-sm text-slate-500">
+                      Sumber: {result.sourceDomain}
+                      {result.fromCache && " (dari cache)"}
+                    </p>
+                  )}
                   <p className="mt-2 max-w-2xl text-slate-600">
                     {result.summary}
                   </p>
