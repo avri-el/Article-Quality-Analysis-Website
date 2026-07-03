@@ -22,34 +22,34 @@ Analyzes Indonesian news articles for quality based on 6 criteria:
 ```mermaid
 flowchart LR
     subgraph Frontend["Frontend (React)"]
-        A[User Input] --> B[Text Paste<br/>or URL]
+        A["User Input"] --> B["Text Paste or URL"]
     end
 
     subgraph Backend["Backend (Express)"]
-        C[/api/analyze] --> D{Input Type?}
-        D -->|Text| E[Direct Analysis]
-        D -->|URL| F[URL Scraper]
+        C["API /analyze"] --> D{"Input Type?"}
+        D -->|"Text"| E["Direct Analysis"]
+        D -->|"URL"| F["URL Scraper"]
         
-        F --> F1[Try Main URL]
-        F1 --> F2{Content OK?}
-        F2 -->|No| F3[Try AMP Version]
-        F3 --> F4{Content OK?}
-        F4 -->|No| F5[OG Description]
+        F --> F1["Try Main URL"]
+        F1 --> F2{"Content OK?"}
+        F2 -->|"No"| F3["Try AMP Version"]
+        F3 --> F4{"Content OK?"}
+        F4 -->|"No"| F5["OG Description Fallback"]
         
-        E --> G[Heuristic Analysis]
-        F2 -->|Yes| G
-        F3 -->|Yes| G
-        F5 -->|Yes| G
+        E --> G["Heuristic Analysis"]
+        F2 -->|"Yes"| G
+        F3 -->|"Yes"| G
+        F5 -->|"Yes"| G
         
-        G --> H[Cache Check]
-        H -->|Miss| I[Claude LLM]
-        H -->|Hit| J[Return Cached]
-        I --> K[Combine Results]
-        K --> L[Return Response]
+        G --> H["Cache Check"]
+        H -->|"Miss"| I["Claude LLM"]
+        H -->|"Hit"| J["Return Cached"]
+        I --> K["Combine Results"]
+        K --> L["Return Response"]
     end
 
     A --> C
-    L --> M[Quality Score<br/>& Verdict]
+    L --> M["Quality Score and Verdict"]
 ```
 
 ## Tech Stack
