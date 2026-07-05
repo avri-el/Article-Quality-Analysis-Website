@@ -5,3 +5,14 @@ server/.cache
 
 AGENTS.md
 
+
+outputs/
+# Python ML dependencies
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+outputs/
+__pycache__/
+*.pyc.venv/
