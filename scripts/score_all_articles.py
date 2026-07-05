@@ -3,13 +3,18 @@
 score_all_articles.py — Hybrid Heuristics + IndoBERT Clustering
 
 Dua-pass pipeline untuk memberi label 6 dimensi ke 80k artikel:
-  Pass 1: Heuristic scoring + IndoBERT embedding, checkpoint tiap 1000 artikel
+  Pass 1: Heuristic scoring + IndoBERT embedding, checkpoint tiap 5 batch
   Pass 2: K-means clustering → refine konten & etika → final CSV
+
+Features:
+  - Resumable: tiap stage bisa resume dari checkpoint
+  - Memmap embeddings (hemat RAM)
+  - Checkpoint tiap 5 batch (~16 save untuk 80k artikel)
 
 Usage:
   python scripts/score_all_articles.py              # full pipeline
   python scripts/score_all_articles.py --skip-stage1 # resume dari stage 2
-  python scripts/score_all_articles.py --skip-stage2 # hanya heuristic + embed
+  python scripts/score_all_articles.py --skip-stage2 # hanya stage 1
 
 Output:
   outputs/embeddings/embeddings.mmap (80k × 768 float32)
@@ -17,12 +22,12 @@ Output:
   outputs/scan_results/heuristic_scores.csv
   outputs/scan_results/dataset_with_labels.csv     ← FINAL
   outputs/scan_results/scan_checkpoint.json
+  outputs/scan_results/stage2_checkpoint.json
 """
 
-import os, sys, json, re, math, time, argparse
+import os, json, re, math, time, argparse
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 
 import torch
 from transformers import AutoTokenizer, AutoModel
@@ -40,9 +45,10 @@ FINAL_CSV = os.path.join(SCAN_DIR, "dataset_with_labels.csv")
 HEURISTIC_CSV = os.path.join(SCAN_DIR, "heuristic_scores.csv")
 EMMAP_PATH = os.path.join(EMBED_DIR, "embeddings.mmap")
 ID_PATH = os.path.join(EMBED_DIR, "article_ids.npy")
+STAGE2_CHECKPOINT = os.path.join(SCAN_DIR, "stage2_checkpoint.json")
 
 BATCH_SIZE = 1000
-CHECKPOINT_INTERVAL = 1000
+CHECKPOINT_INTERVAL = 5  # checkpoint every 5 batches (80 total batches = 16 saves)
 MAX_LENGTH = 512
 MODEL_NAME = "indolem/indobert-base-uncased"
 N_CLUSTERS = 30
@@ -250,7 +256,6 @@ def stage1_heuristics_and_embeddings():
             batch_num = 0
             skipped_first = True
 
-        n_rows = len(chunk)
         batch_start = start_idx + batch_num * BATCH_SIZE
 
         if batch_num < start_batch:
@@ -260,7 +265,6 @@ def stage1_heuristics_and_embeddings():
         if batch_start >= total:
             break
 
-        actual_batch = batch_num - start_batch
         batch_end = min(batch_start + BATCH_SIZE, total)
         current_batch_size = batch_end - batch_start
 
@@ -378,6 +382,14 @@ def stage1_heuristics_and_embeddings():
 
 
 def stage2_cluster_and_score():
+    # Check if already complete
+    if os.path.exists(FINAL_CSV):
+        existing = pd.read_csv(FINAL_CSV)
+        if len(existing) > 0:
+            print(f"[Stage 2] {FINAL_CSV} already exists ({len(existing)} articles).")
+            print("[Stage 2] Skipping. Delete the file to re-run.")
+            return
+
     print("[Stage 2] Loading heuristic scores...")
     if not os.path.exists(HEURISTIC_CSV):
         print("[Stage 2] ERROR: heuristic_scores.csv not found. Run stage 1 first.")
@@ -496,6 +508,10 @@ def stage2_cluster_and_score():
     existing_cols = [c for c in output_cols if c in df.columns]
     df_out = df[existing_cols].copy()
     df_out.to_csv(FINAL_CSV, index=False)
+
+    # mark complete
+    with open(STAGE2_CHECKPOINT, "w") as f:
+        json.dump({"complete": True, "rows": len(df_out)}, f)
 
     # stats
     verdict_counts = df_out["verdict"].value_counts()
