@@ -239,9 +239,9 @@ flowchart LR
     subgraph HYBRID["✅ Hybrid Approach"]
         H1["Smart Routing"]
         H1 --> H2{"Article<br/>Quality?"}
-        H2 -->|Good (>85)| H3["Heuristic Only"]
-        H2 -->|Borderline| H4["Heuristic + LLM"]
-        H2 -->|Bad (<50)| H5["Heuristic Only"]
+        H2 -->|"Good (>85)"| H3["Heuristic Only"]
+        H2 -->|"Borderline"| H4["Heuristic + LLM"]
+        H2 -->|"Bad (<50)"| H5["Heuristic Only"]
         
         H3 --> H6["<100ms<br/>Free"]
         H4 --> H7["1-2s<br/>$0.001-0.01"]
