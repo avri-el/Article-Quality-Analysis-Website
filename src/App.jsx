@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import logo from "./assets/logo.webp";
 
 const verdictFromScore = (score) => {
   if (score >= 85) return "Excellent";
@@ -57,7 +58,8 @@ function App() {
       });
 
       if (!response.ok) {
-        throw new Error("Gagal melakukan analisis");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Gagal melakukan analisis");
       }
 
       const data = await response.json();
@@ -72,6 +74,11 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-blue-50 to-indigo-50 text-blue-950">
       <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-10 lg:px-10">
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="logo" className="h-20 w-auto object-contain" />
+          </div>
+        </div>
         <div className="mb-8 rounded-3xl bg-white p-8 shadow-sm ring-1 ring-blue-200/80">
           <div className="mb-6 max-w-3xl">
             <p className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
@@ -123,8 +130,7 @@ function App() {
                     placeholder="Masukkan tautan artikel, misal manadopost.id/..."
                   />
                   <p className="text-sm text-slate-500">
-                    Jika URL valid dan dikenali, backend akan menggunakan teks
-                    contoh untuk demonstrasi.
+                    Tempel URL artikel dari website mana pun untuk dianalisis.
                   </p>
                 </div>
               )}
@@ -179,6 +185,12 @@ function App() {
                   <h2 className="mt-3 text-3xl font-semibold text-blue-950">
                     Skor artikel: {result.overallScore}
                   </h2>
+                  {result.sourceDomain && (
+                    <p className="mt-1 text-sm text-slate-500">
+                      Sumber: {result.sourceDomain}
+                      {result.fromCache && " (dari cache)"}
+                    </p>
+                  )}
                   <p className="mt-2 max-w-2xl text-slate-600">
                     {result.summary}
                   </p>
