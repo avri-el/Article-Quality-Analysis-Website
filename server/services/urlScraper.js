@@ -24,75 +24,15 @@ const isValidUrl = (url) => {
  * @param {string} url 
  * @returns {string|null}
  */
+const AMP_SITES = ['jawapos.com', 'detik.com', 'kompas.com', 'tribunnews.com', 
+  'sindonews.com', 'republika.co.id', 'merdeka.com', 'cnnindonesia.com', 'jpnn.com'];
+
 const constructAmpUrl = (url) => {
   try {
     const parsed = new URL(url);
-    const pathname = parsed.pathname;
-    
-    // Remove existing /amp/ if present
-    const cleanPath = pathname.replace(/^\/amp\//, '');
-    
-    // Check if it's a known Indonesian news site with special handling
-    const hostname = parsed.hostname.toLowerCase();
-    
-    // Jawa Pos / Manado Post / Tribune / etc (jawapos.com domain)
-    if (hostname.includes('jawapos.com')) {
-      parsed.pathname = '/amp' + cleanPath;
-      return parsed.toString();
-    }
-    
-    // detik.com
-    if (hostname.includes('detik.com')) {
-      parsed.pathname = '/amp' + cleanPath;
-      return parsed.toString();
-    }
-    
-    // kompas.com
-    if (hostname.includes('kompas.com')) {
-      parsed.pathname = '/amp' + cleanPath;
-      return parsed.toString();
-    }
-    
-    // tribunnews.com
-    if (hostname.includes('tribunnews.com')) {
-      parsed.pathname = '/amp' + cleanPath;
-      return parsed.toString();
-    }
-    
-    // sindonews.com
-    if (hostname.includes('sindonews.com')) {
-      parsed.pathname = '/amp' + cleanPath;
-      return parsed.toString();
-    }
-    
-    // republika.co.id
-    if (hostname.includes('republika.co.id')) {
-      parsed.pathname = '/amp' + cleanPath;
-      return parsed.toString();
-    }
-    
-    // merdeka.com
-    if (hostname.includes('merdeka.com')) {
-      parsed.pathname = '/amp' + cleanPath;
-      return parsed.toString();
-    }
-    
-    // cnnindonesia.com
-    if (hostname.includes('cnnindonesia.com')) {
-      parsed.pathname = '/amp' + cleanPath;
-      return parsed.toString();
-    }
-    
-    // jpnn.com (Jawa Pos National)
-    if (hostname.includes('jpnn.com')) {
-      parsed.pathname = '/amp' + cleanPath;
-      return parsed.toString();
-    }
-    
-    // Generic fallback: prepend /amp to path
+    const cleanPath = parsed.pathname.replace(/^\/amp\//, '');
     parsed.pathname = '/amp' + cleanPath;
     return parsed.toString();
-    
   } catch {
     return null;
   }
