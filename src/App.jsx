@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import logo from "./assets/logo.webp";
 
 const verdictFromScore = (score) => {
   if (score >= 85) return "Excellent";
@@ -119,6 +120,11 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-blue-50 to-indigo-50 text-blue-950">
       <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-10 lg:px-10">
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="logo" className="h-20 w-auto object-contain" />
+          </div>
+        </div>
         <div className="mb-8 rounded-3xl bg-white p-8 shadow-sm ring-1 ring-blue-200/80">
           <div className="mb-6 max-w-3xl">
             <p className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
@@ -202,9 +208,33 @@ function App() {
                   className="w-full rounded-3xl border border-blue-200 bg-white px-5 py-4 text-sm outline-none ring-blue-300 transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                   placeholder="Masukkan tautan artikel, misal manadopost.id/..."
                 />
-                <p className="mt-3 text-sm text-slate-500">
-                  Tempel URL artikel dari website mana pun untuk dianalisis.
-                </p>
+              ) : (
+                <div className="space-y-4">
+                  <input
+                    value={url}
+                    onChange={(event) => setUrl(event.target.value)}
+                    type="url"
+                    className="w-full rounded-3xl border border-blue-200 bg-white px-5 py-4 text-sm outline-none ring-blue-300 transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    placeholder="Masukkan tautan artikel, misal manadopost.id/..."
+                  />
+                  <p className="text-sm text-slate-500">
+                    Tempel URL artikel dari website mana pun untuk dianalisis.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-3 rounded-3xl bg-white p-6 text-center shadow-sm ring-1 ring-blue-200">
+              <div className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-500">
+                Ringkasan
+              </div>
+              <div className="text-4xl font-semibold text-blue-950">
+                {activeTab === "paste" ? words : url ? "URL" : "0"}
+              </div>
+              <div className="text-sm text-slate-500">
+                {activeTab === "paste"
+                  ? "Jumlah kata"
+                  : "Tautan yang akan dianalisis"}
               </div>
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
