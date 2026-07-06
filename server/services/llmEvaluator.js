@@ -4,35 +4,18 @@
 
 import { config } from "../config.js";
 
-const SYSTEM_PROMPT = `Anda adalah redaktur senior media berita Indonesia dengan pengalaman 15+ tahun, yang juga memahami cara mesin (Google Search, AI Overview, Google Discover, LLM/Chatbot, Google News) mendistribusikan dan mengutip konten berita.
+// OPTIMIZED: ~300 tokens (was ~800 tokens)
+// Prioritas: akurat tapi ringkas
+const SYSTEM_PROMPT = `Anda redaktur senior media Indonesia. Nilai artikel ini:
 
-Tugas Anda HANYA menilai 3 dimensi berikut (dimensi lain sudah dinilai terpisah):
+1. KONTEN & SUMBER (0-100): newsworthiness, originalitas, relevansi audiens.
 
-1. Konten & Sumber (skor 0-100) - newsworthiness, originalitas, relevansi audiens.
+2. ETIKA & LEGALITAS (0-100): bias/keberimbangan, fitnah (tuduhan tanpa bukti), privasi.
 
-2. Etika & Legalitas (skor 0-100) - bias/keberimbangan, fitnah, privasi.
+CATATAN: Maksimal 80 karakter per note. Highlight SINGKAT 1-2 per dimensi.
 
-3. Struktur & Distribusi Mesin (skor 0-100) - seberapa optimal struktur artikel untuk dibaca dan disitasi oleh mesin (search engine, AI Overview, LLM). Gunakan kriteria berikut sebagai acuan penilaian:
-
-   a. Lead (40-60 kata): Apakah paragraf pertama langsung memuat fakta/jawaban utama (5W1H) tanpa basa-basi pembuka? Lead kosong atau generik = skor rendah, karena ini adalah window ekstraksi utama AI (44% sitasi AI berasal dari 30% awal teks).
-
-   b. Penggunaan subjudul (H3) sesuai panjang artikel:
-      - <400 kata: H3 tidak wajib.
-      - 400-800 kata: idealnya minimal 2 H3.
-      - >800 kata: idealnya minimal 3-4 H3.
-      Artikel panjang tanpa H3 = skor rendah (pola "belah ketupat", skor mesin terendah).
-
-   c. Section mandiri: jika ada H3, apakah paragraf pertama setelah tiap H3 langsung menjawab section tersebut (bukan basa-basi transisi)? AI bisa "mendarat" di tengah artikel, jadi tiap section harus bisa berdiri sendiri sebagai unit yang bisa disitasi.
-
-   d. Kepadatan fakta: apakah ada angka, data, atau kutipan konkret setiap kurang lebih 150-200 kata? Paragraf naratif tanpa fakta baru dianggap "paragraf mati" untuk mesin.
-
-   e. Pola struktur keseluruhan: identifikasi apakah artikel mengikuti pola piramida terbalik biasa (fakta di depan, tapi flat), piramida terbalik berlapis (jawaban utama + tiap H3 punya jawaban sendiri = paling optimal), atau belah ketupat (lead diulur, klimaks di tengah = paling buruk untuk mesin).
-
-Catatan SINGKAT - maksimal 100 karakter per note.
-Tandai highlight SINGKAT - cukup 1-2 per dimensi.
-
-Balas HANYA JSON valid:
-{"konten":{"score":0,"note":""},"etika":{"score":0,"note":""},"strukturDistribusi":{"score":0,"note":""},"nadaNote":"","highlights":[]}`;
+BALAS HANYA JSON valid:
+{"konten":{"score":0,"note":""},"etika":{"score":0,"note":""},"nadaNote":"","highlights":[]}`;
 
 const parseJSON = (text) => {
   let clean = text.trim()
@@ -69,10 +52,14 @@ const parseJSON = (text) => {
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 export const evaluateWithLLM = async (articleText, retries = 2) => {
-  // Truncate article to ~6000 chars to keep response manageable
-  const truncatedText = articleText.length > 6000 
-    ? articleText.slice(0, 6000) + "\n...[artikel dipotong]..." 
-    : articleText;
+  // OPTIMIZED: Truncate to ~4000 chars (was 6000) - lead + samples enough
+  // Keep first 3000 chars + last 1000 chars for context
+  let truncatedText = articleText;
+  if (articleText.length > 4000) {
+    const first = articleText.slice(0, 3000);
+    const last = articleText.slice(-1000);
+    truncatedText = first + "\n...[middle omitted]...\n" + last;
+  }
   
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
@@ -85,7 +72,7 @@ export const evaluateWithLLM = async (articleText, retries = 2) => {
         },
         body: JSON.stringify({
           model: "claude-sonnet-5",
-          max_tokens: 800,  // ponytail: reduced - notes should be brief
+          max_tokens: 600,  // OPTIMIZED: reduced from 800
           system: SYSTEM_PROMPT,
           messages: [
             { role: "user", content: `Artikel:\n"""\n${truncatedText}\n"""` },
