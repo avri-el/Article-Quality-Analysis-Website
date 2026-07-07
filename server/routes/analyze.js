@@ -21,7 +21,7 @@ const CACHE_VERSION = 'v3';
 
 // Weights (konten + etika = 0.45 via LLM, others = 0.55 via heuristics)
 const WEIGHTS = {
-  struktur: 0.20,
+  struktur: 0.2,
   bahasa: 0.15,
   seo: 0.10,
   teknis: 0.10,
@@ -34,9 +34,9 @@ const LOW_THRESHOLD = 50;
 const estimateHeuristicScore = (struktur, bahasa, seo, teknis) => {
   const heuristicScore = Math.round(
     struktur.score * WEIGHTS.struktur +
-    bahasa.score * WEIGHTS.bahasa +
-    seo.score * WEIGHTS.seo +
-    teknis.score * WEIGHTS.teknis
+      bahasa.score * WEIGHTS.bahasa +
+      seo.score * WEIGHTS.seo +
+      teknis.score * WEIGHTS.teknis,
   );
   return {
     heuristicOnly: heuristicScore,
@@ -109,7 +109,9 @@ router.post("/analyze", async (req, res) => {
 
     // Validate input
     if (!articleText || !articleText.trim()) {
-      return res.status(400).json({ error: "Teks artikel atau URL diperlukan." });
+      return res
+        .status(400)
+        .json({ error: "Teks artikel atau URL diperlukan." });
     }
 
     // Check cache (include mode and version in cache key)
@@ -120,7 +122,7 @@ router.post("/analyze", async (req, res) => {
         ...cached, 
         fromCache: true,
         sourceUrl: sourceUrl,
-        sourceDomain: sourceDomain
+        sourceDomain: sourceDomain,
       });
     }
 
@@ -170,16 +172,20 @@ router.post("/analyze", async (req, res) => {
 
     // 4. Calculate weighted overall score
     const overallScore = Math.round(
-      llmResult.konten.score * 0.30 +
-      struktur.score * 0.20 +
-      bahasaHeuristik.score * 0.15 +
-      llmResult.etika.score * 0.15 +
-      seo.score * 0.10 +
-      teknis.score * 0.10
+      llmResult.konten.score * 0.3 +
+        struktur.score * 0.2 +
+        bahasaHeuristik.score * 0.15 +
+        llmResult.etika.score * 0.15 +
+        seo.score * 0.1 +
+        teknis.score * 0.1,
     );
 
     const verdict =
-      overallScore >= 75 ? "Layak terbit" : overallScore >= 50 ? "Perlu revisi" : "Ditolak";
+      overallScore >= 75
+        ? "Layak terbit"
+        : overallScore >= 50
+          ? "Perlu revisi"
+          : "Ditolak";
 
     const result = {
       overallScore,
@@ -217,11 +223,13 @@ router.post("/analyze", async (req, res) => {
     };
 
     setCached(cacheKey, result);
-    
+
     return res.json(result);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: err.message || "Terjadi kesalahan saat analisis." });
+    return res
+      .status(500)
+      .json({ error: err.message || "Terjadi kesalahan saat analisis." });
   }
 });
 

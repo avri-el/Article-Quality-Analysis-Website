@@ -2,7 +2,12 @@
 // Fokus: struktur mesin-readable + weakness detection + AI-SEO optimization
 
 const clean = (text) => text.trim().replace(/\s+/g, " ");
-const countWords = (text) => (text.trim() ? text.trim().split(/\s+/).length : 0);
+const countWords = (text) =>
+  text.trim() ? text.trim().split(/\s+/).length : 0;
+
+// ============================================================================
+// AI-SEO HEURISTICS (Based on Jawa Pos "Piramida Terbalik Berlapis")
+// ============================================================================
 
 // ============================================================================
 // AI-SEO HEURISTICS (Based on Jawa Pos "Piramida Terbalik Berlapis")
@@ -14,17 +19,18 @@ const has5W1H = (text) => {
     /\b(apa|siapa|kapan|di mana|mengapa|bagaimana)\b/i,
     /\b(what|who|when|where|why|how)\b/i,
   ];
-  return patterns.some(p => p.test(text));
+  return patterns.some((p) => p.test(text));
 };
 
 // Count facts (numbers, quotes, data)
 const countFacts = (text) => {
-  const sentences = text.split(/[.!?]+/).filter(s => s.trim());
+  const sentences = text.split(/[.!?]+/).filter((s) => s.trim());
   let facts = 0;
-  sentences.forEach(s => {
+  sentences.forEach((s) => {
     if (/\d+/.test(s)) facts++;
     if (/".*".*?\b(menurut|kata|ujar|sebut)\b/i.test(s)) facts++;
-    if (/\b(persen|ratus|puluh|juta|ribu|kali|lebih|kurang)\b/i.test(s)) facts++;
+    if (/\b(persen|ratus|puluh|juta|ribu|kali|lebih|kurang)\b/i.test(s))
+      facts++;
   });
   return facts;
 };
@@ -33,9 +39,12 @@ const countFacts = (text) => {
 const countHeadings = (text) => {
   let count = 0;
   const lines = text.split(/\n/);
-  lines.forEach(line => {
-    if (/^#{2,3}\s+/.test(line) || /<h[23][^>]*>/i.test(line) || 
-        (/^[A-Z][A-Za-z\s]{8,50}$/.test(line.trim()) && line.trim().length > 10)) {
+  lines.forEach((line) => {
+    if (
+      /^#{2,3}\s+/.test(line) ||
+      /<h[23][^>]*>/i.test(line) ||
+      (/^[A-Z][A-Za-z\s]{8,50}$/.test(line.trim()) && line.trim().length > 10)
+    ) {
       count++;
     }
   });
@@ -44,9 +53,11 @@ const countHeadings = (text) => {
 
 // Count dead paragraphs (paragraphs without facts, >= 100 words)
 const countDeadParagraphs = (text) => {
-  const paragraphs = clean(text).split(/\n{2,}|\n/).filter(p => p.trim().length > 50);
+  const paragraphs = clean(text)
+    .split(/\n{2,}|\n/)
+    .filter((p) => p.trim().length > 50);
   let dead = 0;
-  paragraphs.forEach(p => {
+  paragraphs.forEach((p) => {
     const facts = countFacts(p);
     const words = countWords(p);
     if (facts === 0 && words >= 100) dead++;
@@ -493,7 +504,7 @@ export const analyzeStruktur = (text) => {
   const leadWords = countWords(firstParagraph);
   const wordCount = countWords(text);
   const headingCount = countHeadings(text);
-  
+
   const notes = [];
   const strengths = [];
   const weaknesses = [];
@@ -868,12 +879,11 @@ const checkActiveVoice = (text) => {
 const detectPassiveSentences = (text) => {
   const weaknesses = [];
   const sentences = text.split(/(?<=[.!?])\s+/);
-  let charIndex = 0;
-  
+
   sentences.forEach((sentence, idx) => {
     const trimmed = sentence.trim();
     if (!trimmed) return;
-    
+
     // Check for passive voice patterns
     const passiveMatch = trimmed.match(/\b(di[a-z]+|ter[a-z]+)\b/gi);
     if (passiveMatch && passiveMatch.length > 0) {
@@ -884,11 +894,10 @@ const detectPassiveSentences = (text) => {
         text: trimmed.slice(0, 150),
         passiveWord: passiveWord,
         index: idx,
-        note: `Kalimat pasif: "${passiveWord}"`
+        note: `Kalimat pasif: "${passiveWord}"`,
       });
     }
-    
-    // Check for complex sentences (>25 words)
+
     const words = trimmed.split(/\s+/);
     if (words.length > 25) {
       weaknesses.push({
@@ -896,52 +905,65 @@ const detectPassiveSentences = (text) => {
         text: trimmed.slice(0, 150),
         wordCount: words.length,
         index: idx,
-        note: `Kalimat panjang (${words.length} kata, ideal ≤25)`
+        note: `Kalimat panjang (${words.length} kata, ideal ≤25)`,
       });
     }
   });
-  
+
   return weaknesses;
 };
 
 const detectFormalOveruse = (text) => {
   const weaknesses = [];
-  const formalWords = /\b(jika|karena|bahwa|sehingga|agar|bila|supaya|dengan demikian|di mana|hal ini|yaitu)\b/gi;
+  const formalWords =
+    /\b(jika|karena|bahwa|sehingga|agar|bila|supaya|dengan demikian|di mana|hal ini|yaitu)\b/gi;
   const matches = text.match(formalWords) || [];
   
   // Count word occurrences
   const wordCounts = {};
-  matches.forEach(m => {
+  matches.forEach((m) => {
     const w = m.toLowerCase();
     wordCounts[w] = (wordCounts[w] || 0) + 1;
   });
-  
+
   Object.entries(wordCounts).forEach(([word, count]) => {
     if (count >= 5) {
       weaknesses.push({
-        type: 'formal',
+        type: "formal",
         text: word,
         count: count,
-        note: `"${word}" muncul ${count}x - pertimbangkan variasi`
+        note: `"${word}" muncul ${count}x - pertimbangkan variasi`,
       });
     }
   });
-  
+
   return weaknesses;
 };
 
 export const analyzeBahasaHeuristic = (text) => {
-  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  const sentences = text.split(/[.!?]+/).filter((s) => s.trim().length > 0);
   const words = countWords(text);
   const syllables = words > 0 ? words * 1.5 : 0;
-  const readability = sentences.length > 0 
-    ? Math.max(0, Math.min(100, Math.round(206.835 - 1.015 * (words / sentences.length) - 84.6 * (syllables / words))))
-    : 0;
-  
+  const readability =
+    sentences.length > 0
+      ? Math.max(
+          0,
+          Math.min(
+            100,
+            Math.round(
+              206.835 -
+                1.015 * (words / sentences.length) -
+                84.6 * (syllables / words),
+            ),
+          ),
+        )
+      : 0;
+
   const passivePattern = /\b(di[a-z]+|ter[a-z]+)\b/gi;
   const passiveMatches = text.match(passivePattern) || [];
-  const passiveRatio = sentences.length > 0 ? passiveMatches.length / sentences.length : 0;
-  
+  const passiveRatio =
+    sentences.length > 0 ? passiveMatches.length / sentences.length : 0;
+
   const notes = [];
   const strengths = [];
   const weaknesses = [];
@@ -1200,7 +1222,7 @@ const detectTechnicalIssues = (text) => {
       recommendation: `Hapus ${spaceCount - 1} spasi antara "${beforeWord}" dan "${afterWord}"`,
     });
   }
-  
+
   // Trailing whitespace
   const trailingRegex = /[ \t]+$/gm;
   while ((match = trailingRegex.exec(text)) !== null) {
@@ -1208,7 +1230,7 @@ const detectTechnicalIssues = (text) => {
     // Get the line content
     const lineMatch = text.slice(context.startOfLine || 0, text.length).split('\n')[lineNum - 1];
     issues.push({
-      type: 'trailing',
+      type: "trailing",
       position: match.index,
       line: lineNum,
       lineContent: text.split('\n')[lineNum - 1] || '',
@@ -1216,10 +1238,11 @@ const detectTechnicalIssues = (text) => {
       recommendation: 'Hapus spasi di akhir baris ini',
     });
   }
-  
+
   // Inconsistent line breaks
-  const hasMixedBreaks = (text.includes('\r\n') && text.includes('\n\n')) ||
-                         (text.includes('\n\n') && text.includes('\n') && !text.includes('\r'));
+  const hasMixedBreaks =
+    (text.includes("\r\n") && text.includes("\n\n")) ||
+    (text.includes("\n\n") && text.includes("\n") && !text.includes("\r"));
   if (hasMixedBreaks) {
     issues.push({
       type: 'linebreak',
@@ -1228,18 +1251,18 @@ const detectTechnicalIssues = (text) => {
       recommendation: 'Gunakan satu jenis line break yang konsisten',
     });
   }
-  
+
   // Non-standard quotes
   const fancyQuotes = text.match(/[""]/g) || [];
   if (fancyQuotes.length > 3) {
     issues.push({
-      type: 'quotes',
+      type: "quotes",
       count: fancyQuotes.length,
       note: `${fancyQuotes.length} tanda kutip non-standar (")`,
       recommendation: 'Gunakan tanda kutip standar "..." bukan "..."',
     });
   }
-  
+
   return issues;
 };
 
@@ -1258,7 +1281,6 @@ export const analyzeTeknis = (text) => {
   } else if (doubleSpaces === 0) {
     strengths.push('Tidak ada spasi ganda');
   }
-  
   const trailingSpaces = (text.match(/[ \t]+$/gm) || []).length;
   if (trailingSpaces > 5) {
     score -= 5;

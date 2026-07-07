@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import logo from "./assets/logo.webp";
 
 const verdictFromScore = (score) => {
   if (score >= 85) return "Excellent";
@@ -14,6 +15,20 @@ const badgeColor = (score) => {
   return "bg-rose-100 text-rose-700";
 };
 
+const scoreTextColor = (score) => {
+  if (score >= 80) return "text-emerald-600";
+  if (score >= 60) return "text-blue-600";
+  if (score >= 50) return "text-amber-600";
+  return "text-red-600";
+};
+
+const scoreBarColor = (score) => {
+  if (score >= 80) return "bg-emerald-500";
+  if (score >= 60) return "bg-blue-500";
+  if (score >= 50) return "bg-amber-500";
+  return "bg-red-500";
+};
+
 const sampleArticle = `Pemerintah Kota Manado resmi mengalokasikan anggaran sebesar Rp45 miliar untuk perbaikan jalan rusak di sejumlah kecamatan pada tahun anggaran 2026. Menurut Kepala Dinas PUPR Kota Manado, Ferry Lompoliu, anggaran tersebut akan difokuskan pada 32 ruas jalan yang dinilai paling rusak berdasarkan hasil survei lapangan bulan Mei lalu.
 
 Banyak warga menilai perbaikan ini seharusnya sudah dilakukan sejak tahun lalu. Menurut sumber yang tidak disebutkan namanya, proyek ini rawan dikorupsi.
@@ -21,70 +36,81 @@ Banyak warga menilai perbaikan ini seharusnya sudah dilakukan sejak tahun lalu. 
 Proyek ini ditargetkan rampung sebelum akhir tahun 2026 dan akan diawasi langsung oleh inspektorat daerah. Beberapa pengamat kebijakan publik menyebut alokasi ini sudah tepat sasaran.`;
 
 const weaknessStyles = {
-  passive: { icon: "🔴", label: "Kalimat Pasif", class: "border-l-4 border-red-400 bg-red-50" },
-  complex: { icon: "🟡", label: "Kalimat Kompleks", class: "border-l-4 border-yellow-400 bg-yellow-50" },
-  formal: { icon: "🔵", label: "Kata Formal Berulang", class: "border-l-4 border-blue-400 bg-blue-50" },
-  spacing: { icon: "⚪", label: "Spasi Ganda", class: "border-l-4 border-gray-400 bg-gray-50" },
-  trailing: { icon: "⚪", label: "Spasi Akhir Baris", class: "border-l-4 border-gray-400 bg-gray-50" },
-  linebreak: { icon: "⚪", label: "Inkonsisten Line Break", class: "border-l-4 border-gray-400 bg-gray-50" },
-  quotes: { icon: "⚪", label: "Tanda Kutip Non-standar", class: "border-l-4 border-gray-400 bg-gray-50" },
+  passive: {
+    label: "Kalimat Pasif",
+    dot: "bg-red-500",
+    class: "border-l-4 border-red-400 bg-red-50",
+  },
+  complex: {
+    label: "Kalimat Kompleks",
+    dot: "bg-amber-500",
+    class: "border-l-4 border-amber-400 bg-amber-50",
+  },
+  formal: {
+    label: "Kata Formal Berulang",
+    dot: "bg-blue-500",
+    class: "border-l-4 border-blue-400 bg-blue-50",
+  },
+  spacing: {
+    label: "Spasi Ganda",
+    dot: "bg-slate-400",
+    class: "border-l-4 border-slate-300 bg-slate-50",
+  },
+  trailing: {
+    label: "Spasi Akhir Baris",
+    dot: "bg-slate-400",
+    class: "border-l-4 border-slate-300 bg-slate-50",
+  },
+  linebreak: {
+    label: "Inkonsisten Line Break",
+    dot: "bg-slate-400",
+    class: "border-l-4 border-slate-300 bg-slate-50",
+  },
+  quotes: {
+    label: "Tanda Kutip Non-standar",
+    dot: "bg-slate-400",
+    class: "border-l-4 border-slate-300 bg-slate-50",
+  },
 };
 
 const WeaknessLegend = () => (
-  <div className="flex flex-wrap gap-3 text-xs text-slate-500 mt-2">
+  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500">
     {Object.entries(weaknessStyles).map(([key, val]) => (
-      <span key={key} className="flex items-center gap-1">
-        <span>{val.icon}</span>
+      <span key={key} className="flex items-center gap-1.5">
+        <Dot className={val.dot} />
         {val.label}
       </span>
     ))}
   </div>
 );
 
-// Special component for spacing issues with boxed display (Option B)
+// Spacing issue: shows the exact before/after text with the extra
+// whitespace made visible, so the writer can see precisely what to fix.
 const SpacingIssueBox = ({ issue }) => {
-  if (!issue || typeof issue !== 'object') return null;
-  
-  // Helper to safely get string values
-  const toString = (val) => {
-    if (val === null || val === undefined) return '';
-    if (typeof val === 'string') return val;
-    if (typeof val === 'number') return String(val);
-    if (typeof val === 'object') return JSON.stringify(val);
-    return String(val);
-  };
-  
-  const spaceDisplay = issue.spaceCount ? '·'.repeat(Math.min(issue.spaceCount, 20)) : '·';
-  
+  const spaceDisplay = "·".repeat(issue.spaceCount);
+
   return (
-    <div className="border-2 border-red-300 bg-red-50 rounded-xl p-3 mt-2">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-red-600 font-bold">{toString(issue.note)}</span>
-      </div>
-      
-      {/* Main display box */}
-      <div className="bg-white border border-slate-200 rounded-lg p-3 font-mono text-sm">
-        <div className="flex items-center justify-center gap-1 text-slate-400 text-xs mb-1">
-          <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded">
-            {toString(issue.before)}
+    <div className="mt-2 rounded-xl border border-slate-200 bg-white p-3">
+      <p className="text-xs font-semibold text-slate-600">{issue.note}</p>
+
+      <div className="mt-2 rounded-lg border border-slate-100 bg-slate-50 p-3 font-mono text-sm">
+        <div className="flex flex-wrap items-center justify-center gap-1 text-xs">
+          <span className="rounded bg-emerald-50 px-2 py-0.5 text-emerald-700">
+            {issue.before}
           </span>
-          <span className="px-2 py-0.5 bg-red-200 text-red-700 border border-red-400 rounded font-bold">
+          <span className="rounded border border-red-300 bg-red-100 px-2 py-0.5 font-bold text-red-700">
             {spaceDisplay}
           </span>
-          <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded">
-            {toString(issue.after)}
+          <span className="rounded bg-emerald-50 px-2 py-0.5 text-emerald-700">
+            {issue.after}
           </span>
         </div>
-        
-        {/* Pointer */}
-        <div className="text-center text-red-500 text-lg mt-1">↑↑</div>
-        
-        {/* Context */}
+
         {issue.context && (
-          <div className="text-xs text-slate-500 mt-2 border-t border-slate-200 pt-2">
-            <span className="text-slate-400">Konteks:</span>
+          <div className="mt-2 border-t border-slate-200 pt-2 text-xs text-slate-500">
+            <span className="font-semibold text-slate-400">Konteks</span>
             <pre className="mt-1 whitespace-pre-wrap break-all font-sans text-slate-600">
-              {toString(issue.context)}
+              {issue.context}
             </pre>
           </div>
         )}
@@ -178,87 +204,106 @@ const WeaknessList = ({ weaknesses, max = 5 }) => {
         
         // Standard rendering for other issues
         return (
-          <div key={i} className={`flex items-start gap-2 p-2 rounded-lg text-xs ${style.class}`}>
-            <span className="mt-0.5">{style.icon}</span>
-            <div>
+          <div
+            key={i}
+            className={`flex items-start gap-2.5 rounded-lg p-2.5 text-xs ${style.class}`}
+          >
+            <Dot className={style.dot} />
+            <div className="min-w-0">
               <p className="font-medium text-slate-700">
                 {w.passiveWord && (
-                  <span className="text-red-600 font-bold">"{toString(w.passiveWord)}"</span>
+                  <span className="font-semibold text-red-700">
+                    &ldquo;{w.passiveWord}&rdquo;
+                  </span>
                 )}
-                {w.wordCount && <span>Kalimat {toString(w.wordCount)} kata</span>}
-                {w.count && <span>"{weakText}" {toString(w.count)}x</span>}
-                {(w.type === 'linebreak' || w.type === 'quotes') && (
-                  <span>{toString(w.note) || "Masalah teknis"}</span>
+                {w.wordCount && <span>Kalimat {w.wordCount} kata</span>}
+                {w.count && (
+                  <span>
+                    &ldquo;{w.text}&rdquo; &middot; {w.count}x
+                  </span>
+                )}
+                {(w.type === "linebreak" || w.type === "quotes") && (
+                  <span>{w.note || "Masalah teknis"}</span>
                 )}
               </p>
-              {weakText && w.type !== 'formal' && (
-                <p className="text-slate-500 mt-0.5">{weakText.slice(0, 120)}{weakText.length > 120 ? '...' : ''}</p>
+              {w.text && w.type !== "formal" && (
+                <p className="mt-1 text-slate-500">{w.text.slice(0, 120)}...</p>
               )}
-              {w.recommendation && (
-                <p className="text-slate-500 mt-0.5 italic">💡 {toString(w.recommendation)}</p>
-              )}
+              <Recommendation text={w.recommendation} />
             </div>
           </div>
         );
       })}
       {weaknesses.length > max && (
-        <p className="text-xs text-slate-400">...dan {weaknesses.length - max} lainnya</p>
+        <p className="text-xs text-slate-400">
+          dan {weaknesses.length - max} temuan lainnya
+        </p>
       )}
     </div>
   );
 };
 
-// Verification Flag Styles
+/* ---------------------------------------------------------
+ * Verification flags
+ * ------------------------------------------------------- */
+
 const flagStyles = {
-  high: { icon: "🔴", label: "Prioritas Tinggi", class: "border-l-4 border-red-500 bg-red-50" },
-  medium: { icon: "🟡", label: "Prioritas Sedang", class: "border-l-4 border-yellow-500 bg-yellow-50" },
-  low: { icon: "🔵", label: "Prioritas Rendah", class: "border-l-4 border-blue-500 bg-blue-50" },
+  high: {
+    label: "Prioritas Tinggi",
+    dot: "bg-red-500",
+    class: "border-l-4 border-red-500 bg-red-50",
+  },
+  medium: {
+    label: "Prioritas Sedang",
+    dot: "bg-amber-500",
+    class: "border-l-4 border-amber-500 bg-amber-50",
+  },
+  low: {
+    label: "Prioritas Rendah",
+    dot: "bg-blue-500",
+    class: "border-l-4 border-blue-500 bg-blue-50",
+  },
 };
 
 const VerificationFlagList = ({ flags }) => {
-  if (!flags || !Array.isArray(flags) || flags.length === 0) return null;
-
-  // Helper to safely convert value to string for display
-  const toString = (val) => {
-    if (val === null || val === undefined) return '';
-    if (typeof val === 'string') return val;
-    if (typeof val === 'number') return String(val);
-    if (typeof val === 'object') return JSON.stringify(val);
-    return String(val);
-  };
+  if (!flags || flags.length === 0) return null;
 
   return (
     <div className="space-y-3">
       {flags.map((flag, idx) => {
-        // Ensure flag is an object with expected properties
-        if (!flag || typeof flag !== 'object') return null;
-        
         const style = flagStyles[flag.priority] || flagStyles.medium;
         return (
-          <div key={idx} className={`flex items-start gap-3 p-3 rounded-xl text-sm ${style.class}`}>
-            <span className="mt-0.5 text-lg">{style.icon}</span>
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-slate-700">{style.label}</span>
-              </div>
-              <p className="mt-1 text-slate-600">
-                {flag.text && <span>"{toString(flag.text).slice(0, 100)}" </span>}
-                {flag.attributedTo && <span>- {toString(flag.attributedTo)}</span>}
-                {flag.context && !flag.text && <span>{toString(flag.context).slice(0, 100)}</span>}
-                {flag.keyword && <span className="text-red-600 font-semibold">"{toString(flag.keyword)}"</span>}
-                {flag.subject && <span>{toString(flag.subject)}</span>}
+          <div
+            key={idx}
+            className={`flex items-start gap-3 rounded-xl p-3 text-sm ${style.class}`}
+          >
+            <Dot className={`${style.dot} mt-2`} />
+            <div className="min-w-0 flex-1">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {style.label}
+              </span>
+              <p className="mt-1 text-slate-700">
+                {flag.text && <span>&ldquo;{flag.text}&rdquo; </span>}
+                {flag.attributedTo && (
+                  <span className="text-slate-500">
+                    &mdash; {flag.attributedTo}
+                  </span>
+                )}
+                {flag.context && !flag.text && (
+                  <span>{flag.context.slice(0, 100)}</span>
+                )}
+                {flag.keyword && (
+                  <span className="font-semibold text-red-700">
+                    &ldquo;{flag.keyword}&rdquo;
+                  </span>
+                )}
+                {flag.subject && <span>{flag.subject}</span>}
               </p>
-              {flag.recommendation && (
-                <p className="mt-1 text-xs text-slate-500 italic">
-                  💡 {toString(flag.recommendation)}
-                </p>
-              )}
-              <div className="mt-2 flex gap-2">
-                <label className="flex items-center gap-1 text-xs cursor-pointer">
-                  <input type="checkbox" className="rounded" />
-                  <span>Sudah diverifikasi</span>
-                </label>
-              </div>
+              <Recommendation text={flag.recommendation} />
+              <label className="mt-2 flex w-fit cursor-pointer items-center gap-1.5 text-xs text-slate-500">
+                <input type="checkbox" className="rounded" />
+                <span>Sudah diverifikasi</span>
+              </label>
             </div>
           </div>
         );
@@ -275,16 +320,21 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [expandedCategory, setExpandedCategory] = useState(null);
 
   const words = useMemo(
     () => text.trim().split(/\s+/).filter(Boolean).length,
     [text],
   );
 
+  const toggleCategory = (name) =>
+    setExpandedCategory((prev) => (prev === name ? null : name));
+
   const analyze = async () => {
     setError("");
     setLoading(true);
     setResult(null);
+    setExpandedCategory(null);
 
     try {
       const response = await fetch("/api/analyze", {
@@ -320,6 +370,8 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-blue-50 to-indigo-50 text-blue-950">
       <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-10 lg:px-10">
+        <Masthead />
+
         <div className="mb-8 rounded-3xl bg-white p-8 shadow-sm ring-1 ring-blue-200/80">
           <div className="mb-6 max-w-3xl">
             <p className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
@@ -330,13 +382,13 @@ function App() {
             </h1>
             <p className="mt-3 text-base leading-7 text-slate-600">
               Tempel teks artikel atau masukkan tautan. Tidak ada login, tidak
-              ada dashboard yang rumit — langsung analisis.
+              ada dashboard yang rumit &mdash; langsung analisis.
             </p>
           </div>
 
           {/* Mode Selector */}
-          <div className="mb-6 p-4 bg-slate-50 rounded-2xl">
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
+          <div className="mb-6 rounded-2xl bg-slate-50 p-4">
+            <label className="mb-2 block text-sm font-semibold text-slate-700">
               Mode Analisis
             </label>
             <div className="flex flex-wrap gap-2">
@@ -345,10 +397,10 @@ function App() {
                   key={opt.id}
                   type="button"
                   onClick={() => setMode(opt.id)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
+                  className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
                     mode === opt.id
                       ? "bg-blue-900 text-white"
-                      : "bg-white text-slate-600 hover:bg-blue-50 border border-slate-200"
+                      : "border border-slate-200 bg-white text-slate-600 hover:bg-blue-50"
                   }`}
                 >
                   {opt.name}
@@ -356,16 +408,16 @@ function App() {
               ))}
             </div>
             <p className="mt-2 text-xs text-slate-500">
-              {modeOptions.find(m => m.id === mode)?.desc}
-              {mode !== 'local' && (
+              {modeOptions.find((m) => m.id === mode)?.desc}
+              {mode !== "local" && (
                 <span className="ml-2 text-amber-600">
-                  ⚠️ Butuh API key Olagon
+                  Membutuhkan API key Olagon
                 </span>
               )}
             </p>
           </div>
 
-          <div className="mb-6 flex gap-2 rounded-2xl bg-blue-50 p-1 text-sm font-semibold text-blue-700 w-fit">
+          <div className="mb-6 flex w-fit gap-2 rounded-2xl bg-blue-50 p-1 text-sm font-semibold text-blue-700">
             <button
               type="button"
               className={`rounded-2xl px-4 py-2 transition ${activeTab === "paste" ? "bg-blue-900 text-white" : "hover:bg-blue-100"}`}
@@ -402,9 +454,7 @@ function App() {
                   <div className="text-4xl font-semibold text-blue-950">
                     {words}
                   </div>
-                  <div className="text-sm text-slate-500">
-                    Jumlah kata
-                  </div>
+                  <div className="text-sm text-slate-500">Jumlah kata</div>
                 </div>
               </div>
 
@@ -468,17 +518,17 @@ function App() {
             <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-blue-200">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="mb-2 flex items-center gap-2">
                     <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-500">
                       Hasil Analisis
                     </p>
                     {result.skippedLLM && (
-                      <span className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">
                         Mode Lokal
                       </span>
                     )}
                     {result.fromCache && (
-                      <span className="px-2 py-0.5 text-xs bg-slate-100 text-slate-600 rounded-full">
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
                         Cache
                       </span>
                     )}
@@ -504,167 +554,52 @@ function App() {
             </div>
 
             {/* Verification Flags Section */}
-            {result.verificationFlags && result.verificationFlags.length > 0 && (
-              <div className="rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 p-8 shadow-sm ring-2 ring-amber-200">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-xl font-semibold text-amber-800">
-                      ⚠️ Perlu Verifikasi Manual
-                    </h3>
-                    <p className="text-sm text-amber-600 mt-1">
-                      {result.verificationFlags.length} item memerlukan perhatian sebelum publish
-                    </p>
-                  </div>
-                  <span className="px-3 py-1 bg-amber-200 text-amber-800 text-sm font-semibold rounded-full">
-                    {result.verificationFlags.length} item
-                  </span>
-                </div>
-                <VerificationFlagList flags={result.verificationFlags} />
-                <div className="mt-4 pt-4 border-t border-amber-200">
-                  <button className="text-sm text-amber-700 hover:text-amber-900 font-medium">
-                    📋 Tandai Semua Terverifikasi
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Score Cards */}
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {(result.details || []).map((item) => (
-                <article
-                  key={item.name}
-                  className={`rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-200 ${
-                    item.name.includes("Bahasa") || item.name.includes("Teknis") 
-                      ? "ring-2 ring-blue-300" 
-                      : item.name.includes("Mesin-Baca") 
-                        ? "ring-2 ring-purple-300" 
-                        : item.name.includes("Konten") || item.name.includes("Etika")
-                          ? "ring-2 ring-green-300"
-                          : ""
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-sm font-semibold text-blue-700">{item.name}</p>
-                    <span className={`text-2xl font-semibold ${
-                      parseInt(item.value || 0) >= 80 
-                        ? "text-emerald-600" 
-                        : parseInt(item.value || 0) >= 60 
-                          ? "text-blue-600" 
-                          : parseInt(item.value || 0) >= 50 
-                            ? "text-amber-600" 
-                            : "text-red-600"
-                    }`}>
-                      {item.value}
+            {result.verificationFlags &&
+              result.verificationFlags.length > 0 && (
+                <div className="rounded-3xl border border-amber-200 bg-amber-50/60 p-8">
+                  <div className="mb-4 flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <WarningGlyph className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
+                      <div>
+                        <h3 className="text-lg font-semibold text-amber-900">
+                          Perlu Verifikasi Manual
+                        </h3>
+                        <p className="mt-0.5 text-sm text-amber-700">
+                          {result.verificationFlags.length} item memerlukan
+                          perhatian sebelum dipublikasikan
+                        </p>
+                      </div>
+                    </div>
+                    <span className="flex-shrink-0 rounded-full bg-amber-200 px-3 py-1 text-sm font-semibold text-amber-800">
+                      {result.verificationFlags.length}
                     </span>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-slate-600">{item.text}</p>
-                  
-                  {/* Strengths for Konten & Etika */}
-                  {item.strengths && item.strengths.length > 0 && (
-                    <div className="mt-3 space-y-1">
-                      {item.strengths.slice(0, 3).map((s, i) => (
-                        <p key={i} className="text-xs text-emerald-600 flex items-start gap-1">
-                          <span>✅</span>
-                          <span>{s}</span>
-                        </p>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Weaknesses for Konten & Etika */}
-                  {item.weaknesses && item.weaknesses.length > 0 && 
-                   item.name !== "Bahasa & Gaya" && item.name !== "Pemeriksaan Teknis" && (
-                    <div className="mt-2 space-y-1">
-                      {item.weaknesses.slice(0, 3).map((w, i) => (
-                        <p key={i} className="text-xs text-amber-600 flex items-start gap-1">
-                          <span>⚠️</span>
-                          <span>{w}</span>
-                        </p>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* WeaknessList for Bahasa & Teknis */}
-                  {(item.name === "Bahasa & Gaya" || item.name === "Pemeriksaan Teknis") && (
-                    <WeaknessList weaknesses={item.weaknesses} />
-                  )}
-                </article>
-              ))}
+                  <VerificationFlagList flags={result.verificationFlags} />
+                  <div className="mt-4 border-t border-amber-200 pt-4">
+                    <button className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-800 hover:text-amber-950">
+                      <CheckGlyph className="h-4 w-4" />
+                      Tandai semua terverifikasi
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            {/* Category Overview Strip: skor semua kategori sekilas pandang */}
+            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-200">
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-500">
+                  Skor per Kategori
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Klik kategori untuk detail lengkap
+                </p>
+              </div>
+              <CategoryOverviewStrip
+                details={result.details}
+                activeCategory={expandedCategory}
+                onSelect={toggleCategory}
+              />
             </div>
-
-            {/* Strengths Section - Konten & Etika */}
-            {(result.details || []).some(d => d.strengths?.length > 0) && (
-              <div className="rounded-3xl bg-emerald-50 p-6 shadow-sm ring-2 ring-emerald-200">
-                <h3 className="text-lg font-semibold text-emerald-800 mb-3">
-                  💪 Kekuatan Artikel
-                </h3>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {(result.details || []).filter(d => d.strengths?.length > 0).map(d => (
-                    <div key={d.name} className="bg-white rounded-xl p-4">
-                      <p className="text-sm font-semibold text-slate-700 mb-2">{d.name}</p>
-                      <div className="space-y-1">
-                        {d.strengths.map((s, i) => (
-                          <p key={i} className="text-xs text-emerald-600 flex items-start gap-1">
-                            <span>✅</span>
-                            <span>{s}</span>
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Weaknesses Section - Konten & Etika */}
-            {(result.details || []).filter(d => d.weaknesses?.length > 0 && 
-              (d.name.includes("Konten") || d.name.includes("Etika"))).length > 0 && (
-              <div className="rounded-3xl bg-amber-50 p-6 shadow-sm ring-2 ring-amber-200">
-                <h3 className="text-lg font-semibold text-amber-800 mb-3">
-                  ⚠️ Titik Lemah yang Perlu Diperbaiki
-                </h3>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {(result.details || []).filter(d => d.weaknesses?.length > 0 && 
-                    (d.name.includes("Konten") || d.name.includes("Etika"))).map(d => (
-                    <div key={d.name} className="bg-white rounded-xl p-4">
-                      <p className="text-sm font-semibold text-slate-700 mb-2">{d.name}</p>
-                      <div className="space-y-1">
-                        {d.weaknesses.map((w, i) => (
-                          <p key={i} className="text-xs text-amber-600 flex items-start gap-1">
-                            <span>⚠️</span>
-                            <span>{w}</span>
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Technical Weaknesses Section - Bahasa & Teknis */}
-            {(result.details || []).some(d => d.weaknesses?.length > 0 && 
-              (d.name.includes("Bahasa") || d.name.includes("Teknis"))) && (
-              <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-blue-200">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-blue-950">
-                    Titik Kelemahan Teknis
-                  </h3>
-                  <WeaknessLegend />
-                </div>
-                <div className="mt-4 space-y-3">
-                  {(result.details || []).filter(d => d.weaknesses?.length > 0 && 
-                    (d.name.includes("Bahasa") || d.name.includes("Teknis"))).map(d => (
-                    <div key={d.name}>
-                      <p className="text-sm font-semibold text-slate-700 mb-2">
-                        {d.name} ({d.weaknesses.length} temuan)
-                      </p>
-                      <WeaknessList weaknesses={d.weaknesses} max={10} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Highlights Section */}
             {result.highlights && result.highlights.length > 0 && (
@@ -672,15 +607,15 @@ function App() {
                 <h3 className="text-xl font-semibold text-blue-950">
                   Sorotan Kalimat
                 </h3>
-                <div className="mt-6 space-y-4 text-sm leading-7 text-slate-700">
-                  {(result.highlights || []).map((item, idx) => (
+                <div className="mt-6 grid gap-4 text-sm leading-7 text-slate-700 md:grid-cols-2">
+                  {result.highlights.map((item, idx) => (
                     <div
                       key={idx}
                       className={`rounded-3xl border p-4 ${
-                        item.type === "bad" 
-                          ? "border-rose-200 bg-rose-50" 
-                          : item.type === "warn" 
-                            ? "border-amber-200 bg-amber-50" 
+                        item.type === "bad"
+                          ? "border-rose-200 bg-rose-50"
+                          : item.type === "warn"
+                            ? "border-amber-200 bg-amber-50"
                             : "border-emerald-200 bg-emerald-50"
                       }`}
                     >
@@ -693,7 +628,9 @@ function App() {
                       </p>
                       <p className="mt-2 text-slate-700">{item.text}</p>
                       {item.note && (
-                        <p className="mt-2 text-sm text-slate-500">{item.note}</p>
+                        <p className="mt-2 text-sm text-slate-500">
+                          {item.note}
+                        </p>
                       )}
                     </div>
                   ))}

@@ -18,38 +18,42 @@ BALAS HANYA JSON valid:
 {"konten":{"score":0,"note":""},"etika":{"score":0,"note":""},"nadaNote":"","highlights":[]}`;
 
 const parseJSON = (text) => {
-  let clean = text.trim()
-    .replace(/^```json\s*/i, '')
-    .replace(/^```\s*/i, '')
-    .replace(/\s*```$/i, '');
-  
+  let clean = text
+    .trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/i, "");
+
   // Try normal parse first
   try {
     return JSON.parse(clean);
   } catch {
     // Truncated JSON - try to extract complete objects
     // Find closing brace for konten and etika (required fields)
-    const kontenMatch = clean.match(/"konten"\s*:\s*\{\s*"score"\s*:\s*(\d+)\s*,\s*"note"\s*:\s*"([^"\\]*(\\.[^"\\]*)*)"/);
-    const etikaMatch = clean.match(/"etika"\s*:\s*\{\s*"score"\s*:\s*(\d+)\s*,\s*"note"\s*:\s*"([^"\\]*(\\.[^"\\]*)*)"/);
-    
+    const kontenMatch = clean.match(
+      /"konten"\s*:\s*\{\s*"score"\s*:\s*(\d+)\s*,\s*"note"\s*:\s*"([^"\\]*(\\.[^"\\]*)*)"/,
+    );
+    const etikaMatch = clean.match(
+      /"etika"\s*:\s*\{\s*"score"\s*:\s*(\d+)\s*,\s*"note"\s*:\s*"([^"\\]*(\\.[^"\\]*)*)"/,
+    );
+
     if (kontenMatch && etikaMatch) {
       // Extract highlights array if present
       const highlightsMatch = clean.match(/"highlights"\s*:\s*\[([^\]]*)/);
       const nadaMatch = clean.match(/"nadaNote"\s*:\s*"([^"]*)"/);
-      
       return {
         konten: { score: parseInt(kontenMatch[1]), note: kontenMatch[2] || "" },
         etika: { score: parseInt(etikaMatch[1]), note: etikaMatch[2] || "" },
         nadaNote: nadaMatch ? nadaMatch[1] : "",
-        highlights: []
+        highlights: [],
       };
     }
-    
+
     throw new Error(`JSON tidak valid: ${clean.slice(0, 150)}...`);
   }
 };
 
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export const evaluateWithLLM = async (articleText, retries = 2) => {
   // OPTIMIZED: Truncate to ~4000 chars (was 6000) - lead + samples enough
@@ -63,12 +67,23 @@ export const evaluateWithLLM = async (articleText, retries = 2) => {
   
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const response = await fetch("https://gateway.olagon.site/anthropic/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": config.anthropicApiKey,
-          "anthropic-version": "2023-06-01",
+      const response = await fetch(
+        "https://gateway.olagon.site/anthropic/v1/messages",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": config.anthropicApiKey,
+            "anthropic-version": "2023-06-01",
+          },
+          body: JSON.stringify({
+            model: "claude-sonnet-5",
+            max_tokens: 600, // OPTIMIZED: reduced from 800
+            system: SYSTEM_PROMPT,
+            messages: [
+              { role: "user", content: `Artikel:\n"""\n${truncatedText}\n"""` },
+            ],
+          }),
         },
         body: JSON.stringify({
           model: "claude-sonnet-5",

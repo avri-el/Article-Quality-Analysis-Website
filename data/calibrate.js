@@ -30,5 +30,9 @@ for (const row of rows) {
 }
 
 const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
-console.log(`Rata-rata skor heuristik dari ${scores.length} artikel: ${mean.toFixed(1)}`);
-console.log("Kalau jauh di bawah 75 padahal sumbernya Detik/Tempo/Kompas, threshold perlu dikalibrasi ulang.");
+console.log(
+  `Rata-rata skor heuristik dari ${scores.length} artikel: ${mean.toFixed(1)}`,
+);
+console.log(
+  "Kalau jauh di bawah 75 padahal sumbernya Detik/Tempo/Kompas, threshold perlu dikalibrasi ulang.",
+);
