@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import logo from "./assets/logo.webp";
 
 const verdictFromScore = (score) => {
   if (score >= 85) return "Excellent";
@@ -454,6 +455,22 @@ const CategoryAccordion = ({ details, expanded, onToggle }) => (
   </div>
 );
 
+/* ---------------------------------------------------------
+ * Masthead
+ * Publisher branding sits in its own thin strip above the
+ * hero card: top-left is where readers automatically look for
+ * "who made/owns this" (F-pattern scanning + strong left-to-right
+ * reading habit in ID), it stays visually quiet so it doesn't
+ * compete with the hero's headline, and it never needs to move
+ * or resize once real content/results load below it.
+ * ------------------------------------------------------- */
+
+const Masthead = () => (
+  <div className="mb-6 flex items-center">
+    <img src={logo} alt="Manado Post" className="h-14 w-auto sm:h-16" />
+  </div>
+);
+
 function App() {
   const [text, setText] = useState(sampleArticle);
   const [url, setUrl] = useState("");
@@ -516,6 +533,8 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-blue-50 to-indigo-50 text-blue-950">
       <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-10 lg:px-10">
+        <Masthead />
+
         <div className="mb-8 rounded-3xl bg-white p-8 shadow-sm ring-1 ring-blue-200/80">
           <div className="mb-6 max-w-3xl">
             <p className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
