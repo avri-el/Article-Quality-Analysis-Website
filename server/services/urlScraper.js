@@ -24,6 +24,7 @@ const isValidUrl = (url) => {
  * @param {string} url
  * @returns {string|null}
  */
+<<<<<<< HEAD
 const AMP_SITES = [
   "jawapos.com",
   "detik.com",
@@ -35,12 +36,21 @@ const AMP_SITES = [
   "cnnindonesia.com",
   "jpnn.com",
 ];
+=======
+const AMP_SITES = ['jawapos.com', 'detik.com', 'kompas.com', 'tribunnews.com', 
+  'sindonews.com', 'republika.co.id', 'merdeka.com', 'cnnindonesia.com', 'jpnn.com'];
+>>>>>>> 9caacdd087d7b0e50f0dfe54d8622f6d08d39c19
 
 const constructAmpUrl = (url) => {
   try {
     const parsed = new URL(url);
+<<<<<<< HEAD
     const cleanPath = parsed.pathname.replace(/^\/amp\//, "");
     parsed.pathname = "/amp" + cleanPath;
+=======
+    const cleanPath = parsed.pathname.replace(/^\/amp\//, '');
+    parsed.pathname = '/amp' + cleanPath;
+>>>>>>> 9caacdd087d7b0e50f0dfe54d8622f6d08d39c19
     return parsed.toString();
   } catch {
     return null;
