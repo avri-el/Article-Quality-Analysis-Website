@@ -343,6 +343,25 @@ export const analyzeStruktur = (text) => {
     );
   }
 
+  const requiredHeadings = wordCount < 400 ? 0 : wordCount < 800 ? 2 : 3;
+  if (wordCount >= 400 && headingCount < requiredHeadings) {
+    score -= 10;
+    notes.push(
+      `Butuh minimal ${requiredHeadings} subjudul untuk artikel ${wordCount} kata.`,
+    );
+  }
+
+  if (paragraphs.length < 3) {
+    score -= 10;
+    notes.push("Minimal 3 paragraf untuk struktur piramida terbalik.");
+  }
+
+  const hasAttr = /\b(menurut|ujar|kata|jelas|tutur|sebut)\b/i.test(text);
+  if (!hasAttr) {
+    score -= 10;
+    notes.push("Tidak ada atribusi narasumber.");
+  }
+
   const hasFiveW = has5W1H(firstParagraph);
 
   return {
@@ -358,44 +377,10 @@ export const analyzeStruktur = (text) => {
   };
 };
 
-const requiredHeadings = wordCount < 400 ? 0 : wordCount < 800 ? 2 : 3;
-if (wordCount >= 400 && headingCount < requiredHeadings) {
-  score -= 10;
-  notes.push(
-    `Butuh minimal ${requiredHeadings} subjudul untuk artikel ${wordCount} kata.`,
-  );
-}
-
-if (paragraphs.length < 3) {
-  score -= 10;
-  notes.push("Minimal 3 paragraf untuk struktur piramida terbalik.");
-}
-
-const hasAttr = /\b(menurut|ujar|kata|jelas|tutur|sebut)\b/i.test(text);
-if (!hasAttr) {
-  score -= 10;
-  notes.push("Tidak ada atribusi narasumber.");
-}
-
-const hasFiveW = has5W1H(firstParagraph);
-
-return {
-  score: Math.max(0, score),
-  notes,
-  meta: {
-    leadWords,
-    headingCount,
-    requiredHeadings,
-    paragraphCount: paragraphs.length,
-    has5W1H: hasFiveW,
-  },
-};
-
 // --- BAHASA & GAYA ENHANCED ---
 const detectPassiveSentences = (text) => {
   const weaknesses = [];
   const sentences = text.split(/(?<=[.!?])\s+/);
-  let charIndex = 0;
 
   sentences.forEach((sentence, idx) => {
     const trimmed = sentence.trim();
@@ -435,7 +420,6 @@ const detectFormalOveruse = (text) => {
   const formalWords =
     /\b(jika|karena|bahwa|sehingga|agar|bila|supaya|dengan demikian|di mana|hal ini|yaitu)\b/gi;
   const matches = text.match(formalWords) || [];
-  const unique = [...new Set(matches.map((m) => m.toLowerCase()))];
 
   // Flag if same formal word appears 5+ times
   const wordCounts = {};
@@ -561,10 +545,6 @@ const detectTechnicalIssues = (text) => {
   const trailingRegex = /[ \t]+$/gm;
   while ((match = trailingRegex.exec(text)) !== null) {
     const lineNum = text.slice(0, match.index).split("\n").length;
-    // Get the line content
-    const lineMatch = text
-      .slice(context.startOfLine || 0, text.length)
-      .split("\n")[lineNum - 1];
     issues.push({
       type: "trailing",
       position: match.index,
